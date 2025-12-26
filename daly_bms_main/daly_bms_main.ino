@@ -73,6 +73,8 @@ void setup()
     {
         delay(500);
     }
+    Serial.print("ESP32 IP address: ");
+    Serial.println(WiFi.localIP());
 
     // serve the web interface on the main route
     server.on("/", HTTP_GET, []()
