@@ -30,39 +30,57 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
         .card h3 { margin-top: 0; color: #7f8c8d; font-size: 0.9rem; text-transform: uppercase; }
         .value { font-size: 1.8rem; font-weight: bold; color: #2980b9; }
         .unit { font-size: 1rem; color: #7f8c8d; }
-        .status-online { color: #27ae60; font-weight: bold; }
+        .status { color: #27ae60; font-weight: bold; }
     </style>
 </head>
 <body>
     <h1>Daly BMS Dashboard</h1>
     <div class="container" id="dashboard">
+        <div class="card"><h3>Status</h3><div class="value" id="status" style="font-size:1.2rem">Connecting...</div></div>
         <div class="card"><h3>Pack Voltage</h3><div class="value" id="volts">--</div><span class="unit">V</span></div>
         <div class="card"><h3>Pack Current</h3><div class="value" id="amps">--</div><span class="unit">A</span></div>
         <div class="card"><h3>State of Charge</h3><div class="value" id="soc">--</div><span class="unit">%</span></div>
         <div class="card"><h3>Temp (Avg)</h3><div class="value" id="temp">--</div><span class="unit">°C</span></div>
+        <div class="card"><h3>Cell Voltages</h3><div class="value" id="cellvolts">--</div><span class="unit">mV</span></div>
         <div class="card"><h3>Max Cell</h3><div class="value" id="maxcell">--</div><span class="unit">mV</span></div>
         <div class="card"><h3>Min Cell</h3><div class="value" id="mincell">--</div><span class="unit">mV</span></div>
-        <div class="card"><h3>Status</h3><div class="value" id="status" style="font-size:1.2rem">Connecting...</div></div>
     </div>
 
     <script>
-        function updateData() {
-            fetch('/data')
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('volts').innerText = data.voltage;
-                    document.getElementById('amps').innerText = data.current;
-                    document.getElementById('soc').innerText = data.soc;
-                    document.getElementById('temp').innerText = data.temperatures.avg;
-                    document.getElementById('maxcell').innerText = data.cells.max_mv;
-                    document.getElementById('mincell').innerText = data.cells.min_mv;
-                    document.getElementById('status').innerText = data.status;
-                })
-                .catch(err => console.error('Error fetching data:', err));
-        }
+      function setFields(values) {
+        const fields = ['volts', 'amps', 'soc', 'temp', 'maxcell', 'mincell', 'status', 'cellvolts'];
+        fields.forEach(field => {
+            document.getElementById(field).innerText = values[field] ?? "-";
+        });
+      }
 
-        setInterval(updateData, 10000);
-        updateData();
+      function updateData() {
+        fetch('/data')
+            .then(response => response.json())
+            .then(data => {
+                if (data && Object.keys(data).length > 0) {
+                    setFields({
+                        volts: data.voltage,
+                        amps: data.current,
+                        soc: data.soc,
+                        temp: data.temperatures.avg,
+                        maxcell: data.cells.max_mv,
+                        mincell: data.cells.min_mv,
+                        status: data.status,
+                        cellvolts: data.cells?.voltages?.join(', ') ?? "-",
+                    });
+                } else {
+                    setFields({"status": "Not connected"});
+                }
+            })
+            .catch(err => {
+                console.error('Error fetching data:', err);
+                setFields({});
+            });
+    }
+
+    setInterval(updateData, 10000);
+    updateData();
     </script>
 </body>
 </html>

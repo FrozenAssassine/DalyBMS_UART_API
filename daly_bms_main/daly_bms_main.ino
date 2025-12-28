@@ -6,8 +6,8 @@
 #include "website_data.h"
 #include "secrets.h" // rename the secrets.example.h to secrets.h and update your data
 
-#define DALY_RX 16
-#define DALY_TX 17
+#define DALY_RX 17
+#define DALY_TX 16
 #define UPDATE_INTERVAL 20000 // update every milliseconds
 
 Daly_BMS_UART bms(Serial2);
@@ -19,6 +19,13 @@ unsigned long lastUpdateTime = 0;
 void updateBmsJson()
 {
     bms.update();
+
+    if(!bms.getStatusInfo()){
+      jsonOutput = "{}";
+      Serial.println("Got no data!");
+      //no data!
+      return;
+    }
 
     DynamicJsonDocument doc(8192);
 
